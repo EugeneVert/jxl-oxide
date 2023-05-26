@@ -286,8 +286,15 @@ impl DecoderInner {
             return Ok(token);
         }
 
+        // n < 32
         let n = split_exponent - (msb_in_token + lsb_in_token) +
             ((token - split) >> (msb_in_token + lsb_in_token));
+        // Max amount of bits for `read_bits` is 32 and max valid left shift is 29
+        // bits. However, for speed no error is propagated here, instead limit the
+        // nbits size. If nbits > 29, the code stream is invalid, but no error is
+        // returned.
+        let n = n & 31;
+
         let low_bits = token & ((1 << lsb_in_token) - 1);
         let token = token >> lsb_in_token;
         let token = token & ((1 << msb_in_token) - 1);
